@@ -13,13 +13,13 @@ export class CreateSnapshotHandler extends BaseToolHandler<
   { success: boolean; memo: string; message: string }
 > {
   readonly name = 'create_snapshot';
-  readonly description = 'Create a data snapshot to backup current state (防止误操作可回滚)';
+  readonly description = 'Create a snapshot to backup all notes in SiYuan workspace. Essential before bulk operations to enable rollback if needed';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       memo: {
         type: 'string',
-        description: 'Snapshot description/memo (optional, default: "Auto snapshot")',
+        description: 'Description of what this snapshot is for (optional, default: "Auto snapshot")',
       },
     },
   };
@@ -45,7 +45,7 @@ export class ListSnapshotsHandler extends BaseToolHandler<
   { snapshots: any[]; pageCount: number; totalCount: number }
 > {
   readonly name = 'list_snapshots';
-  readonly description = 'List available data snapshots with pagination';
+  readonly description = 'List available snapshots of your SiYuan notes workspace with pagination. Shows snapshot creation time and description';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
@@ -73,13 +73,13 @@ export class RollbackSnapshotHandler extends BaseToolHandler<
   { success: boolean; snapshot_id: string; message: string }
 > {
   readonly name = 'rollback_to_snapshot';
-  readonly description = 'Rollback to a specific snapshot (恢复到指定快照状态)';
+  readonly description = 'Restore your SiYuan notes workspace to a previous snapshot state. Use this to recover from accidental changes or deletions';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       snapshot_id: {
         type: 'string',
-        description: 'Snapshot ID to rollback to',
+        description: 'The snapshot ID to restore to (get from list_snapshots)',
       },
     },
     required: ['snapshot_id'],

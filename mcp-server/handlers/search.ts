@@ -22,7 +22,7 @@ export class UnifiedSearchHandler extends BaseToolHandler<
 > {
   readonly name = 'unified_search';
   readonly description =
-    'Unified search tool: search documents/blocks by content, tag, filename, or combination of these filters';
+    'Search notes in SiYuan by content keywords, tags, note titles, or combined filters. Returns matching notes and blocks from your knowledge base';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
@@ -36,7 +36,7 @@ export class UnifiedSearchHandler extends BaseToolHandler<
       },
       filename: {
         type: 'string',
-        description: 'Optional: Filename keyword to search for',
+        description: 'Optional: Note title keyword to search for',
       },
       limit: {
         type: 'number',

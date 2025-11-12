@@ -23,7 +23,7 @@ export class SiyuanBlockApi {
   /**
    * 获取块的 Markdown 内容
    * @param blockId 块 ID
-   * @returns Markdown 内容
+   * @returns Markdown 内容（纯净内容，不含元信息）
    */
   async getBlockMarkdown(blockId: string): Promise<string> {
     const response = await this.client.request<{ content: string }>(

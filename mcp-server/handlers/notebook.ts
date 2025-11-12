@@ -11,7 +11,7 @@ import type { NotebookResponse, SearchResultResponse } from '../../src/types/ind
  */
 export class ListNotebooksHandler extends BaseToolHandler<{}, NotebookResponse[]> {
   readonly name = 'list_notebooks';
-  readonly description = 'List all notebooks in SiYuan Note';
+  readonly description = 'List all notebooks in your SiYuan workspace. Notebooks are top-level containers for organizing your notes';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {},
@@ -30,18 +30,18 @@ export class GetRecentlyUpdatedDocumentsHandler extends BaseToolHandler<
   SearchResultResponse[]
 > {
   readonly name = 'get_recently_updated_documents';
-  readonly description = 'Get recently updated documents (sorted by update time, most recent first)';
+  readonly description = 'Get recently modified notes in SiYuan, sorted by update time (most recent first). Useful for finding what you worked on recently';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       limit: {
         type: 'number',
-        description: 'Number of documents to return (default: 10)',
+        description: 'Number of notes to return (default: 10)',
         default: 10,
       },
       notebook_id: {
         type: 'string',
-        description: 'Optional: Limit to specific notebook ID',
+        description: 'Optional: Filter to a specific notebook ID',
       },
     },
   };
@@ -51,6 +51,28 @@ export class GetRecentlyUpdatedDocumentsHandler extends BaseToolHandler<
       args.limit || 10,
       args.notebook_id
     );
+  }
+}
+
+/**
+ * 创建新笔记本
+ */
+export class CreateNotebookHandler extends BaseToolHandler<{ name: string }, string> {
+  readonly name = 'create_notebook';
+  readonly description = 'Create a new notebook in SiYuan with the specified name';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      name: {
+        type: 'string',
+        description: 'The name of the new notebook',
+      },
+    },
+    required: ['name'],
+  };
+
+  async execute(args: any, context: ExecutionContext): Promise<string> {
+    return await context.siyuan.notebook.createNotebook(args.name);
   }
 }
 

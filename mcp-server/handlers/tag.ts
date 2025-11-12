@@ -14,7 +14,7 @@ export class ListAllTagsHandler extends BaseToolHandler<
 > {
   readonly name = 'list_all_tags';
   readonly description =
-    'List all unique document tags used in SiYuan workspace with their usage counts. Returns tag labels and document counts in an LLM-friendly format. Supports filtering by prefix and limiting by depth level.';
+    'List all tags used across your SiYuan notes with usage counts. Useful for discovering how you organize your knowledge. Supports filtering by prefix and limiting by hierarchy depth';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
@@ -45,7 +45,7 @@ export class ReplaceTagHandler extends BaseToolHandler<
 > {
   readonly name = 'batch_replace_tag';
   readonly description =
-    'Batch replace all occurrences of a tag with another tag across all documents using official SiYuan API. Use empty string for new_tag to remove the tag.';
+    'Rename or remove a tag across all notes in SiYuan. Useful for reorganizing your knowledge base tags. Use empty string for new_tag to remove the tag entirely';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {

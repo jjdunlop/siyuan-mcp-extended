@@ -34,6 +34,7 @@ import {
 import {
   ListNotebooksHandler,
   GetRecentlyUpdatedDocumentsHandler,
+  CreateNotebookHandler,
 } from './notebook.js';
 import {
   CreateSnapshotHandler,
@@ -63,6 +64,7 @@ export function createAllHandlers() {
     // 笔记本
     new ListNotebooksHandler(),
     new GetRecentlyUpdatedDocumentsHandler(),
+    new CreateNotebookHandler(),
 
     // 快照
     new CreateSnapshotHandler(),

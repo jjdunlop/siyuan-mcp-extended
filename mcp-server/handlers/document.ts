@@ -9,22 +9,60 @@ import type { DocTreeNodeResponse } from '../../src/types/index.js';
 /**
  * 获取文档内容
  */
-export class GetDocumentContentHandler extends BaseToolHandler<{ document_id: string }, string> {
+export class GetDocumentContentHandler extends BaseToolHandler<{ document_id: string; offset?: number; limit?: number }, string> {
   readonly name = 'get_document_content';
-  readonly description = 'Get the markdown content of a document';
+  readonly description = 'Read the markdown content of a note in SiYuan. Returns the full note content in markdown format, with optional pagination support';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       document_id: {
         type: 'string',
-        description: 'The document ID',
+        description: 'The note document ID (block ID)',
+      },
+      offset: {
+        type: 'number',
+        description: 'Starting line number (0-based index). Default is 0 (start from beginning)',
+        default: 0,
+      },
+      limit: {
+        type: 'number',
+        description: 'Number of lines to return. If not specified, returns all lines from offset to end',
       },
     },
     required: ['document_id'],
   };
 
   async execute(args: any, context: ExecutionContext): Promise<string> {
-    return await context.siyuan.getFileContent(args.document_id);
+    // 获取完整内容用于计算总行数
+    const fullContent = await context.siyuan.getFileContent(args.document_id);
+    const lines = fullContent.split('\n');
+    const totalLines = lines.length;
+
+    // 如果没有指定 offset 和 limit，返回完整内容（带元信息）
+    if (args.offset === undefined && args.limit === undefined) {
+      const metaInfo = `--- Document Info ---\nTotal Lines: ${totalLines}\n--- End Info ---\n\n`;
+      return metaInfo + fullContent;
+    }
+
+    // 进行分页处理
+    const offset = args.offset ?? 0;
+    const startLine = offset;
+
+    // 如果起始行超出范围，返回元信息说明
+    if (startLine >= totalLines) {
+      return `--- Document Info ---\nTotal Lines: ${totalLines}\nRequested Range: ${startLine}-${startLine + (args.limit || 0)}\nStatus: Out of range\n--- End Info ---\n`;
+    }
+
+    // 计算结束行
+    const endLine = args.limit !== undefined ? startLine + args.limit : totalLines;
+    const actualEndLine = Math.min(endLine, totalLines);
+
+    // 构建元信息
+    const metaInfo = `--- Document Info ---\nTotal Lines: ${totalLines}\nCurrent Range: ${startLine}-${actualEndLine - 1} (showing ${actualEndLine - startLine} lines)\n--- End Info ---\n\n`;
+
+    // 截取指定范围的行
+    const selectedContent = lines.slice(startLine, actualEndLine).join('\n');
+    return metaInfo + selectedContent;
   }
 }
 
@@ -36,21 +74,21 @@ export class CreateDocumentHandler extends BaseToolHandler<
   string
 > {
   readonly name = 'create_document';
-  readonly description = 'Create a new document in SiYuan Note';
+  readonly description = 'Create a new note document in a SiYuan notebook with markdown content';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       notebook_id: {
         type: 'string',
-        description: 'The notebook ID',
+        description: 'The target notebook ID where the note will be created',
       },
       path: {
         type: 'string',
-        description: 'Document path (e.g., /folder/document)',
+        description: 'Note path within the notebook (e.g., /folder/note-title)',
       },
       content: {
         type: 'string',
-        description: 'Markdown content',
+        description: 'Markdown content for the new note',
       },
     },
     required: ['notebook_id', 'path', 'content'],
@@ -69,17 +107,17 @@ export class AppendToDocumentHandler extends BaseToolHandler<
   string
 > {
   readonly name = 'append_to_document';
-  readonly description = 'Append content to an existing document';
+  readonly description = 'Append markdown content to the end of an existing note in SiYuan';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       document_id: {
         type: 'string',
-        description: 'The document ID',
+        description: 'The target note document ID',
       },
       content: {
         type: 'string',
-        description: 'Markdown content to append',
+        description: 'Markdown content to append to the note',
       },
     },
     required: ['document_id', 'content'],
@@ -98,17 +136,17 @@ export class UpdateDocumentHandler extends BaseToolHandler<
   { success: boolean; document_id: string }
 > {
   readonly name = 'update_document';
-  readonly description = 'Update (overwrite) the content of a document';
+  readonly description = 'Replace the entire content of a note in SiYuan with new markdown content (overwrites existing content)';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       document_id: {
         type: 'string',
-        description: 'The document ID to update',
+        description: 'The note document ID to update',
       },
       content: {
         type: 'string',
-        description: 'New markdown content',
+        description: 'New markdown content that will replace the existing note content',
       },
     },
     required: ['document_id', 'content'],
@@ -128,17 +166,17 @@ export class AppendToDailyNoteHandler extends BaseToolHandler<
   string
 > {
   readonly name = 'append_to_daily_note';
-  readonly description = "Append content to today's daily note (creates if not exists)";
+  readonly description = "Append markdown content to today's daily note in SiYuan (automatically creates the daily note if it doesn't exist)";
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       notebook_id: {
         type: 'string',
-        description: 'The notebook ID',
+        description: 'The notebook ID where the daily note resides',
       },
       content: {
         type: 'string',
-        description: 'Markdown content to append',
+        description: 'Markdown content to append to today\'s daily note',
       },
     },
     required: ['notebook_id', 'content'],
@@ -157,22 +195,22 @@ export class MoveDocumentsHandler extends BaseToolHandler<
   { success: boolean; moved_count: number; from_ids: string[]; to_parent_id?: string; to_notebook_root?: string }
 > {
   readonly name = 'move_documents';
-  readonly description = 'Move one or more documents to a new location. Provide EXACTLY ONE destination: either to_parent_id (to nest under a document) OR to_notebook_root (to move to notebook top level).';
+  readonly description = 'Move one or more notes to a new location in SiYuan. Provide EXACTLY ONE destination: either to_parent_id (to nest notes under a parent note) OR to_notebook_root (to move notes to notebook top level).';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       from_ids: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Array of document IDs to move. For a single document, use an array with one element: ["doc-id"]',
+        description: 'Array of note document IDs to move. For a single note, use an array with one element: ["note-id"]',
       },
       to_parent_id: {
         type: 'string',
-        description: 'OPTION 1: Parent document ID. Documents will be moved under this document as children. Cannot be used together with to_notebook_root.',
+        description: 'OPTION 1: Parent note document ID. Notes will be nested under this parent note as children. Cannot be used together with to_notebook_root.',
       },
       to_notebook_root: {
         type: 'string',
-        description: 'OPTION 2: Notebook ID. Documents will be moved to the root (top level) of this notebook. Cannot be used together with to_parent_id.',
+        description: 'OPTION 2: Notebook ID. Notes will be moved to the top level of this notebook. Cannot be used together with to_parent_id.',
       },
     },
     required: ['from_ids'],
@@ -238,17 +276,17 @@ export class GetDocumentTreeHandler extends BaseToolHandler<
   DocTreeNodeResponse[]
 > {
   readonly name = 'get_document_tree';
-  readonly description = 'Get document tree structure with specified depth. Provide a document ID or notebook ID to get its children up to the specified depth.';
+  readonly description = 'Get the hierarchical structure of notes in SiYuan with specified depth. Returns the note tree starting from a notebook or parent note.';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
       id: {
         type: 'string',
-        description: 'Document ID or Notebook ID to start from',
+        description: 'Starting point: note document ID or notebook ID',
       },
       depth: {
         type: 'number',
-        description: 'Maximum depth to traverse (1 = direct children only, 2 = children and grandchildren, etc.). Default is 1.',
+        description: 'How deep to traverse the note hierarchy (1 = direct children only, 2 = children and grandchildren, etc.). Default is 1.',
         default: 1,
       },
     },
