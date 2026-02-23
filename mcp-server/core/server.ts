@@ -17,18 +17,28 @@ import { createAllHandlers } from '../handlers/index.js';
 
 const SERVER_INSTRUCTIONS = `You have access to a SiYuan Note workspace through this MCP server.
 
+## Recommended workflow
+
+1. **Find the document** — use unified_search with filename, or execute_sql. When searching for a document (not a block), use types: ["d"] to avoid noisy paragraph/list-item matches.
+2. **Navigate the structure** — call get_child_blocks on the document ID to see top-level headings and blocks.
+3. **Drill into a section** — call get_child_blocks on a heading block ID to see only the blocks within that section. Or use get_section_content to get the full readable markdown for that section in one call.
+4. **Find a specific block** — use find_block_in_document to locate a block by content within a known document.
+5. **Read or edit** — use get_block / update_block / insert_block on specific block IDs.
+
 ## Efficiency guidelines
 
-- **Prefer block-level tools for targeted edits.** When you know the block ID (e.g. from a search result or SQL query), use get_block / update_block instead of fetching the entire document. This is faster and uses fewer tokens.
-- **Use document-level tools when you need full context.** If you need to understand the overall structure or content of a note, get_document_content is the right choice — don't avoid it when context matters.
-- **Use execute_sql for complex lookups.** The SQL tool gives direct access to the blocks table and is more flexible than unified_search for queries involving multiple conditions, sorting, or aggregation.
-- **Use get_child_blocks for efficient two-step navigation.** First call get_child_blocks on the document ID to see top-level blocks (scan headings to find the right section). Then call get_child_blocks on a heading block ID to get only the blocks within that section. This avoids loading the full document when you only need one section — for a large document this can be 5-10x fewer tokens than get_document_content.
+- **Prefer block-level and section-level tools.** get_section_content on a heading is typically 5-10x cheaper than get_document_content on the whole document. Only use get_document_content when you genuinely need the entire note.
+- **Avoid get_document_content as a default.** It pulls everything including expanded footnotes, which can inline entire other documents. For notes with footnotes, this can mean 80%+ of the tokens are footnote content. Prefer section-level navigation instead.
+- **Use get_document_for_block after search.** When a search returns block-level results, use get_document_for_block to find which document a block belongs to before navigating its structure.
+- **Use get_child_blocks for two-step navigation.** First on the document ID to see headings, then on a heading ID to see that section's blocks. Headings act as containers — their children are the blocks in that section up to the next heading of the same or higher level.
+- **Use execute_sql for complex lookups.** Direct SQL is more flexible than unified_search for multi-condition queries, sorting, or aggregation.
 - **Use get_hpath_by_id to resolve locations.** When reporting results to the user, resolve block IDs to human-readable paths so the user knows where things are.
 
 ## Data safety
 
 - Before bulk modifications or deletions, create a snapshot with create_snapshot.
 - After making changes, verify the result by reading the content back.
+- Be careful editing blocks near footnote definitions ([^n]) — corrupting a reference can break the document rendering.
 
 ## Key concepts
 
@@ -36,6 +46,7 @@ const SERVER_INSTRUCTIONS = `You have access to a SiYuan Note workspace through 
 - **Documents** are top-level blocks (type='d') that contain child blocks.
 - Block types: d=document, h=heading, p=paragraph, l=list, i=list-item, c=code, m=math, t=table, b=blockquote, s=super-block.
 - Custom attributes (custom-* keys) can be set on any block via get_block_attrs / set_block_attrs.
+- The root_id column in the blocks table always points to the document a block belongs to.
 `;
 
 export class SiyuanMCPServer {

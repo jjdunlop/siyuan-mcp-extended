@@ -25,6 +25,7 @@ export * from './tag.js';
 import {
   UnifiedSearchHandler,
   ExecuteSqlHandler,
+  FindBlockInDocumentHandler,
 } from './search.js';
 import {
   GetDocumentContentHandler,
@@ -45,6 +46,8 @@ import {
   InsertBlockHandler,
   MoveBlockHandler,
   GetChildBlocksHandler,
+  GetSectionContentHandler,
+  GetDocumentForBlockHandler,
   GetBlockAttrsHandler,
   SetBlockAttrsHandler,
 } from './block.js';
@@ -68,6 +71,7 @@ export function createAllHandlers() {
     // Search
     new UnifiedSearchHandler(),
     new ExecuteSqlHandler(),
+    new FindBlockInDocumentHandler(),
 
     // Documents
     new GetDocumentContentHandler(),
@@ -88,6 +92,8 @@ export function createAllHandlers() {
     new InsertBlockHandler(),
     new MoveBlockHandler(),
     new GetChildBlocksHandler(),
+    new GetSectionContentHandler(),
+    new GetDocumentForBlockHandler(),
     new GetBlockAttrsHandler(),
     new SetBlockAttrsHandler(),
 

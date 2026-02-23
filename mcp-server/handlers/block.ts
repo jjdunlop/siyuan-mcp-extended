@@ -250,6 +250,88 @@ export class GetChildBlocksHandler extends BaseToolHandler<
 }
 
 /**
+ * Get readable content of a section under a heading
+ */
+export class GetSectionContentHandler extends BaseToolHandler<
+  { heading_block_id: string },
+  { heading: string; markdown: string; block_count: number }
+> {
+  readonly name = 'get_section_content';
+  readonly description =
+    'Get the readable markdown content of a document section by its heading block ID. Returns all content under that heading as a single markdown string — much more token-efficient than get_document_content when you only need one section. Use get_child_blocks on the document first to find heading IDs.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      heading_block_id: {
+        type: 'string',
+        description: 'The heading block ID whose section content to retrieve',
+      },
+    },
+    required: ['heading_block_id'],
+  };
+
+  async execute(
+    args: any,
+    context: ExecutionContext
+  ): Promise<{ heading: string; markdown: string; block_count: number }> {
+    const children = await context.siyuan.block.getChildBlocks(
+      args.heading_block_id
+    );
+    const heading = await context.siyuan.block.getBlockKramdown(
+      args.heading_block_id
+    );
+    const markdownParts: string[] = [heading];
+    for (const child of children) {
+      const km = await context.siyuan.block.getBlockKramdown(child.id);
+      markdownParts.push(km);
+    }
+    return {
+      heading: heading.split('\n')[0],
+      markdown: markdownParts.join('\n\n'),
+      block_count: children.length,
+    };
+  }
+}
+
+/**
+ * Get the document ID that a block belongs to
+ */
+export class GetDocumentForBlockHandler extends BaseToolHandler<
+  { block_id: string },
+  { document_id: string; hpath: string }
+> {
+  readonly name = 'get_document_for_block';
+  readonly description =
+    'Given any block ID, returns the document ID (root_id) it belongs to and the human-readable path. Useful after a search returns block-level results and you need to know which document they live in.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      block_id: {
+        type: 'string',
+        description: 'Any block ID to look up',
+      },
+    },
+    required: ['block_id'],
+  };
+
+  async execute(
+    args: any,
+    context: ExecutionContext
+  ): Promise<{ document_id: string; hpath: string }> {
+    const results = await context.siyuan.search.query(
+      `SELECT root_id, hpath FROM blocks WHERE id = '${args.block_id}' LIMIT 1`
+    );
+    if (!results || results.length === 0) {
+      throw new Error(`Block not found: ${args.block_id}`);
+    }
+    return {
+      document_id: results[0].root_id,
+      hpath: results[0].hpath,
+    };
+  }
+}
+
+/**
  * Get custom attributes of a block
  */
 export class GetBlockAttrsHandler extends BaseToolHandler<

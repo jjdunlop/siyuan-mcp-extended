@@ -32,13 +32,13 @@ The code in this project is primarily developed with AI assistance. While functi
 
 ---
 
-**Fork notice:** The block-level tools, SQL query tool, and additional document management tools (`get_block`, `update_block`, `append_block`, `insert_block`, `move_block`, `get_block_attrs`, `set_block_attrs`, `execute_sql`, `rename_document`, `remove_document`, `get_hpath_by_id`, `get_child_blocks`) were added with AI assistance and have not been fully tested. Use at your own risk.
+**Fork notice:** The block-level tools, SQL query tool, and additional document management tools (`get_block`, `update_block`, `append_block`, `insert_block`, `move_block`, `get_block_attrs`, `set_block_attrs`, `execute_sql`, `rename_document`, `remove_document`, `get_hpath_by_id`, `get_child_blocks`, `get_section_content`, `get_document_for_block`, `find_block_in_document`) were added with AI assistance and have not been fully tested. Use at your own risk.
 
 ## ✨ Features
 
 - 🚀 Full MCP (Model Context Protocol) implementation
-- 📝 28 tools for comprehensive SiYuan Note operations
-- 🔍 Unified search + raw SQL queries
+- 📝 31 tools for comprehensive SiYuan Note operations
+- 🔍 Unified search, raw SQL queries, and scoped document search
 - 📁 Document management (create, read, update, rename, delete, move, tree)
 - 🧱 Block-level operations (get, update, insert, append, move, attributes)
 - 📅 Daily note support with auto-creation
@@ -154,11 +154,12 @@ After configuration, restart your MCP client (Cursor/Claude Desktop) and try:
 
 ## 🛠️ Available MCP Tools
 
-Once configured, you can interact with SiYuan through natural language. The server provides 28 tools:
+Once configured, you can interact with SiYuan through natural language. The server provides 31 tools:
 
 ### 🔍 Search & Query
-- **unified_search** - Search by content, filename, tag, or any combination
+- **unified_search** - Search by content, filename, tag, or any combination (use `types: ["d"]` for document-only results)
 - **execute_sql** - Execute raw SQL queries against the SiYuan database
+- **find_block_in_document** - Search for blocks within a specific document by content keyword
 
 ### 📄 Document Operations
 - **get_document_content** - Get the markdown content of a document
@@ -178,6 +179,8 @@ Once configured, you can interact with SiYuan through natural language. The serv
 - **insert_block** - Insert a block before or after an existing block
 - **move_block** - Move a block within or between documents
 - **get_child_blocks** - Get the immediate children of a block (navigate document structure)
+- **get_section_content** - Get full readable markdown for a section by heading block ID
+- **get_document_for_block** - Look up which document a block belongs to (returns doc ID + path)
 - **get_block_attrs** - Get all attributes of a block (including custom attributes)
 - **set_block_attrs** - Set attributes on a block (e.g. `custom-status`, `custom-priority`)
 

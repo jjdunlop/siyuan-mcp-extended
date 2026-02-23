@@ -22,7 +22,7 @@ export class UnifiedSearchHandler extends BaseToolHandler<
 > {
   readonly name = 'unified_search';
   readonly description =
-    'Search notes in SiYuan by content keywords, tags, note titles, or combined filters. Returns matching notes and blocks from your knowledge base';
+    'Search notes in SiYuan by content keywords, tags, note titles, or combined filters. Returns matching notes and blocks. TIP: When looking for a specific document, use the filename parameter or add types: ["d"] to filter to documents only — otherwise results will include individual paragraphs, list items, etc.';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
@@ -91,5 +91,57 @@ export class ExecuteSqlHandler extends BaseToolHandler<
 
   async execute(args: any, context: ExecutionContext): Promise<Block[]> {
     return await context.siyuan.search.query(args.sql);
+  }
+}
+
+/**
+ * Find blocks within a specific document by content
+ */
+export class FindBlockInDocumentHandler extends BaseToolHandler<
+  { document_id: string; query: string; types?: string[] },
+  Array<{ id: string; type: string; content: string }>
+> {
+  readonly name = 'find_block_in_document';
+  readonly description =
+    'Search for blocks within a specific document by content keyword. Faster than loading the full document when you need to find a particular paragraph, heading, or list within a known note.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      document_id: {
+        type: 'string',
+        description: 'The document ID (root_id) to search within',
+      },
+      query: {
+        type: 'string',
+        description: 'Content keyword to search for within the document',
+      },
+      types: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          'Optional: Block types to filter (e.g. ["h"] for headings only, ["p"] for paragraphs). Omit to search all types.',
+      },
+    },
+    required: ['document_id', 'query'],
+  };
+
+  async execute(
+    args: any,
+    context: ExecutionContext
+  ): Promise<Array<{ id: string; type: string; content: string }>> {
+    let sql = `SELECT id, type, content FROM blocks WHERE root_id = '${args.document_id}' AND content LIKE '%${args.query.replace(/'/g, "''")}%'`;
+    if (args.types && args.types.length > 0) {
+      const typeList = args.types
+        .map((t: string) => `'${t.replace(/'/g, "''")}'`)
+        .join(',');
+      sql += ` AND type IN (${typeList})`;
+    }
+    sql += ' LIMIT 20';
+    const results = await context.siyuan.search.query(sql);
+    return results.map((b) => ({
+      id: b.id,
+      type: b.type,
+      content: b.content,
+    }));
   }
 }
