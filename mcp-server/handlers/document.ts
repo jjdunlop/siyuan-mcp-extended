@@ -1,5 +1,5 @@
 /**
- * 文档相关工具处理器
+ * Document tool handlers
  */
 
 import { BaseToolHandler } from './base.js';
@@ -7,7 +7,7 @@ import type { ExecutionContext, JSONSchema } from '../core/types.js';
 import type { DocTreeNodeResponse } from '../../src/types/index.js';
 
 /**
- * 获取文档内容
+ * Get document content
  */
 export class GetDocumentContentHandler extends BaseToolHandler<{ document_id: string; offset?: number; limit?: number }, string> {
   readonly name = 'get_document_content';
@@ -33,41 +33,41 @@ export class GetDocumentContentHandler extends BaseToolHandler<{ document_id: st
   };
 
   async execute(args: any, context: ExecutionContext): Promise<string> {
-    // 获取完整内容用于计算总行数
+    // Fetch full content to calculate total line count
     const fullContent = await context.siyuan.getFileContent(args.document_id);
     const lines = fullContent.split('\n');
     const totalLines = lines.length;
 
-    // 如果没有指定 offset 和 limit，返回完整内容（带元信息）
+    // If no offset/limit specified, return full content with metadata
     if (args.offset === undefined && args.limit === undefined) {
       const metaInfo = `--- Document Info ---\nTotal Lines: ${totalLines}\n--- End Info ---\n\n`;
       return metaInfo + fullContent;
     }
 
-    // 进行分页处理
+    // Paginate
     const offset = args.offset ?? 0;
     const startLine = offset;
 
-    // 如果起始行超出范围，返回元信息说明
+    // If start line is out of range, return metadata indicating so
     if (startLine >= totalLines) {
       return `--- Document Info ---\nTotal Lines: ${totalLines}\nRequested Range: ${startLine}-${startLine + (args.limit || 0)}\nStatus: Out of range\n--- End Info ---\n`;
     }
 
-    // 计算结束行
+    // Calculate end line
     const endLine = args.limit !== undefined ? startLine + args.limit : totalLines;
     const actualEndLine = Math.min(endLine, totalLines);
 
-    // 构建元信息
+    // Build metadata header
     const metaInfo = `--- Document Info ---\nTotal Lines: ${totalLines}\nCurrent Range: ${startLine}-${actualEndLine - 1} (showing ${actualEndLine - startLine} lines)\n--- End Info ---\n\n`;
 
-    // 截取指定范围的行
+    // Slice the requested line range
     const selectedContent = lines.slice(startLine, actualEndLine).join('\n');
     return metaInfo + selectedContent;
   }
 }
 
 /**
- * 创建文档
+ * Create document
  */
 export class CreateDocumentHandler extends BaseToolHandler<
   { notebook_id: string; path: string; content: string },
@@ -100,7 +100,7 @@ export class CreateDocumentHandler extends BaseToolHandler<
 }
 
 /**
- * 追加到文档
+ * Append to document
  */
 export class AppendToDocumentHandler extends BaseToolHandler<
   { document_id: string; content: string },
@@ -129,7 +129,7 @@ export class AppendToDocumentHandler extends BaseToolHandler<
 }
 
 /**
- * 更新文档
+ * Update document
  */
 export class UpdateDocumentHandler extends BaseToolHandler<
   { document_id: string; content: string },
@@ -159,7 +159,7 @@ export class UpdateDocumentHandler extends BaseToolHandler<
 }
 
 /**
- * 追加到今日笔记
+ * Append to daily note
  */
 export class AppendToDailyNoteHandler extends BaseToolHandler<
   { notebook_id: string; content: string },
@@ -188,7 +188,7 @@ export class AppendToDailyNoteHandler extends BaseToolHandler<
 }
 
 /**
- * 移动文档（通过ID）
+ * Move documents by ID
  */
 export class MoveDocumentsHandler extends BaseToolHandler<
   { from_ids: string | string[]; to_parent_id?: string; to_notebook_root?: string },
@@ -217,13 +217,13 @@ export class MoveDocumentsHandler extends BaseToolHandler<
   };
 
   async execute(args: any, context: ExecutionContext): Promise<{ success: boolean; moved_count: number; from_ids: string[]; to_parent_id?: string; to_notebook_root?: string }> {
-    // 处理 from_ids，支持单个ID或数组
+    // Normalise from_ids — accept a single string or an array
     let fromIds: string[];
 
     if (Array.isArray(args.from_ids)) {
       fromIds = args.from_ids;
     } else if (typeof args.from_ids === 'string') {
-      // 如果是JSON数组字符串，解析它
+      // If it looks like a JSON array string, parse it
       if (args.from_ids.startsWith('[')) {
         try {
           fromIds = JSON.parse(args.from_ids);
@@ -237,7 +237,7 @@ export class MoveDocumentsHandler extends BaseToolHandler<
       throw new Error('from_ids must be a string or array of strings');
     }
 
-    // 验证参数：必须提供其中一个，且只能提供一个
+    // Exactly one destination must be provided
     const hasParentId = !!args.to_parent_id;
     const hasNotebookRoot = !!args.to_notebook_root;
 
@@ -249,11 +249,11 @@ export class MoveDocumentsHandler extends BaseToolHandler<
       throw new Error('Cannot provide both to_parent_id and to_notebook_root - choose only one target location');
     }
 
-    // 情况1: 移动到父文档下（嵌套）
+    // Option 1: nest under a parent document
     if (hasParentId) {
       await context.siyuan.document.moveDocumentsByIds(fromIds, args.to_parent_id);
     }
-    // 情况2: 移动到笔记本根目录（顶级）
+    // Option 2: move to notebook root
     else {
       await context.siyuan.document.moveDocumentsToNotebookRoot(fromIds, args.to_notebook_root);
     }
@@ -269,7 +269,7 @@ export class MoveDocumentsHandler extends BaseToolHandler<
 }
 
 /**
- * 获取文档树
+ * Get document tree
  */
 export class GetDocumentTreeHandler extends BaseToolHandler<
   { id: string; depth?: number },
@@ -296,5 +296,113 @@ export class GetDocumentTreeHandler extends BaseToolHandler<
   async execute(args: any, context: ExecutionContext): Promise<DocTreeNodeResponse[]> {
     const depth = args.depth || 1;
     return await context.siyuan.document.getDocumentTree(args.id, depth);
+  }
+}
+
+/**
+ * Rename a document
+ */
+export class RenameDocumentHandler extends BaseToolHandler<
+  { notebook_id: string; path: string; new_name: string },
+  { success: boolean }
+> {
+  readonly name = 'rename_document';
+  readonly description =
+    'Rename a document in SiYuan. Requires the notebook ID, the document path, and the new title.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      notebook_id: {
+        type: 'string',
+        description: 'The notebook ID containing the document',
+      },
+      path: {
+        type: 'string',
+        description: 'The document path within the notebook (e.g. /folder/old-title)',
+      },
+      new_name: {
+        type: 'string',
+        description: 'The new title for the document',
+      },
+    },
+    required: ['notebook_id', 'path', 'new_name'],
+  };
+
+  async execute(
+    args: any,
+    context: ExecutionContext
+  ): Promise<{ success: boolean }> {
+    await context.siyuan.document.renameDocument(
+      args.notebook_id,
+      args.path,
+      args.new_name
+    );
+    return { success: true };
+  }
+}
+
+/**
+ * Remove (delete) a document
+ */
+export class RemoveDocumentHandler extends BaseToolHandler<
+  { notebook_id: string; path: string },
+  { success: boolean }
+> {
+  readonly name = 'remove_document';
+  readonly description =
+    'Delete a document from SiYuan. Requires the notebook ID and the document path. This action is irreversible.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      notebook_id: {
+        type: 'string',
+        description: 'The notebook ID containing the document',
+      },
+      path: {
+        type: 'string',
+        description: 'The document path within the notebook to delete',
+      },
+    },
+    required: ['notebook_id', 'path'],
+  };
+
+  async execute(
+    args: any,
+    context: ExecutionContext
+  ): Promise<{ success: boolean }> {
+    await context.siyuan.document.removeDocument(args.notebook_id, args.path);
+    return { success: true };
+  }
+}
+
+/**
+ * Resolve a block ID to its human-readable path
+ */
+export class GetHPathByIdHandler extends BaseToolHandler<
+  { block_id: string },
+  { hpath: string }
+> {
+  readonly name = 'get_hpath_by_id';
+  readonly description =
+    'Resolve a block ID to its human-readable document path (e.g. /Research/GNN/RQ3). Useful for displaying location context when working with block IDs from SQL queries or other operations.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      block_id: {
+        type: 'string',
+        description: 'The block ID to resolve',
+      },
+    },
+    required: ['block_id'],
+  };
+
+  async execute(
+    args: any,
+    context: ExecutionContext
+  ): Promise<{ hpath: string }> {
+    const hpath = await context.siyuan.document.getHumanReadablePath(
+      args.block_id
+    );
+    return { hpath };
   }
 }

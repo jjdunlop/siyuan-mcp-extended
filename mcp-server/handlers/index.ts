@@ -1,26 +1,30 @@
 /**
- * 导出所有工具处理器
+ * Export all tool handlers
  */
 
 export { BaseToolHandler } from './base.js';
 
-// 搜索相关
+// Search
 export * from './search.js';
 
-// 文档相关
+// Documents
 export * from './document.js';
 
-// 笔记本相关
+// Blocks
+export * from './block.js';
+
+// Notebooks
 export * from './notebook.js';
 
-// 快照相关
+// Snapshots
 export * from './snapshot.js';
 
-// 标签相关
+// Tags
 export * from './tag.js';
 
 import {
   UnifiedSearchHandler,
+  ExecuteSqlHandler,
 } from './search.js';
 import {
   GetDocumentContentHandler,
@@ -30,7 +34,20 @@ import {
   AppendToDailyNoteHandler,
   MoveDocumentsHandler,
   GetDocumentTreeHandler,
+  RenameDocumentHandler,
+  RemoveDocumentHandler,
+  GetHPathByIdHandler,
 } from './document.js';
+import {
+  GetBlockHandler,
+  UpdateBlockHandler,
+  AppendBlockHandler,
+  InsertBlockHandler,
+  MoveBlockHandler,
+  GetChildBlocksHandler,
+  GetBlockAttrsHandler,
+  SetBlockAttrsHandler,
+} from './block.js';
 import {
   ListNotebooksHandler,
   GetRecentlyUpdatedDocumentsHandler,
@@ -46,13 +63,13 @@ import {
   ReplaceTagHandler,
 } from './tag.js';
 
-// 工厂函数：创建所有处理器实例
 export function createAllHandlers() {
   return [
-    // 搜索
-    new UnifiedSearchHandler(), // 统一搜索
+    // Search
+    new UnifiedSearchHandler(),
+    new ExecuteSqlHandler(),
 
-    // 文档
+    // Documents
     new GetDocumentContentHandler(),
     new CreateDocumentHandler(),
     new AppendToDocumentHandler(),
@@ -60,18 +77,31 @@ export function createAllHandlers() {
     new AppendToDailyNoteHandler(),
     new MoveDocumentsHandler(),
     new GetDocumentTreeHandler(),
+    new RenameDocumentHandler(),
+    new RemoveDocumentHandler(),
+    new GetHPathByIdHandler(),
 
-    // 笔记本
+    // Blocks
+    new GetBlockHandler(),
+    new UpdateBlockHandler(),
+    new AppendBlockHandler(),
+    new InsertBlockHandler(),
+    new MoveBlockHandler(),
+    new GetChildBlocksHandler(),
+    new GetBlockAttrsHandler(),
+    new SetBlockAttrsHandler(),
+
+    // Notebooks
     new ListNotebooksHandler(),
     new GetRecentlyUpdatedDocumentsHandler(),
     new CreateNotebookHandler(),
 
-    // 快照
+    // Snapshots
     new CreateSnapshotHandler(),
     new ListSnapshotsHandler(),
     new RollbackSnapshotHandler(),
 
-    // 标签
+    // Tags
     new ListAllTagsHandler(),
     new ReplaceTagHandler(),
   ];

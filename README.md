@@ -30,12 +30,17 @@ The code in this project is primarily developed with AI assistance. While functi
 
 **请谨慎使用，并对自己的选择负责。**
 
+---
+
+**Fork notice:** The block-level tools, SQL query tool, and additional document management tools (`get_block`, `update_block`, `append_block`, `insert_block`, `move_block`, `get_block_attrs`, `set_block_attrs`, `execute_sql`, `rename_document`, `remove_document`, `get_hpath_by_id`, `get_child_blocks`) were added with AI assistance and have not been fully tested. Use at your own risk.
+
 ## ✨ Features
 
 - 🚀 Full MCP (Model Context Protocol) implementation
-- 📝 15 essential tools for comprehensive SiYuan Note operations
-- 🔍 Unified search (content, filename, tag, and combinations)
-- 📁 Document management (create, read, update, move, tree)
+- 📝 28 tools for comprehensive SiYuan Note operations
+- 🔍 Unified search + raw SQL queries
+- 📁 Document management (create, read, update, rename, delete, move, tree)
+- 🧱 Block-level operations (get, update, insert, append, move, attributes)
 - 📅 Daily note support with auto-creation
 - 📚 Notebook operations
 - 📸 Snapshot management (backup & restore)
@@ -149,10 +154,11 @@ After configuration, restart your MCP client (Cursor/Claude Desktop) and try:
 
 ## 🛠️ Available MCP Tools
 
-Once configured, you can interact with SiYuan through natural language. The server provides 15 essential tools:
+Once configured, you can interact with SiYuan through natural language. The server provides 28 tools:
 
-### 🔍 Search
-- **unified_search** - Unified search tool: search by content, filename, tag, or any combination
+### 🔍 Search & Query
+- **unified_search** - Search by content, filename, tag, or any combination
+- **execute_sql** - Execute raw SQL queries against the SiYuan database
 
 ### 📄 Document Operations
 - **get_document_content** - Get the markdown content of a document
@@ -161,6 +167,19 @@ Once configured, you can interact with SiYuan through natural language. The serv
 - **update_document** - Update (overwrite) document content
 - **move_documents** - Move one or more documents to a new location
 - **get_document_tree** - Get document tree structure with specified depth
+- **rename_document** - Rename a document
+- **remove_document** - Delete a document
+- **get_hpath_by_id** - Resolve a block ID to its human-readable path
+
+### 🧱 Block Operations
+- **get_block** - Get a single block's content by ID (kramdown format)
+- **update_block** - Update a single block's content by ID
+- **append_block** - Append a child block to a parent block
+- **insert_block** - Insert a block before or after an existing block
+- **move_block** - Move a block within or between documents
+- **get_child_blocks** - Get the immediate children of a block (navigate document structure)
+- **get_block_attrs** - Get all attributes of a block (including custom attributes)
+- **set_block_attrs** - Set attributes on a block (e.g. `custom-status`, `custom-priority`)
 
 ### 📅 Daily Note
 - **append_to_daily_note** - Append to today's daily note (auto-creates if needed)
@@ -168,6 +187,7 @@ Once configured, you can interact with SiYuan through natural language. The serv
 ### 📚 Notebook Management
 - **list_notebooks** - List all notebooks
 - **get_recently_updated_documents** - Get recently updated documents
+- **create_notebook** - Create a new notebook
 
 ### 📸 Snapshot Management
 - **create_snapshot** - Create a data snapshot for backup

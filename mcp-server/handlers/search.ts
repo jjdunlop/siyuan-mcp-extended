@@ -1,13 +1,13 @@
 /**
- * 搜索相关工具处理器
+ * Search tool handlers
  */
 
 import { BaseToolHandler } from './base.js';
 import type { ExecutionContext, JSONSchema } from '../core/types.js';
-import type { SearchResultResponse } from '../../src/types/index.js';
+import type { Block, SearchResultResponse } from '../../src/types/index.js';
 
 /**
- * 统一搜索工具：支持内容、标签、文件名等多种条件
+ * Unified search: supports content, tag, filename, and combined filters
  */
 export class UnifiedSearchHandler extends BaseToolHandler<
   {
@@ -32,7 +32,7 @@ export class UnifiedSearchHandler extends BaseToolHandler<
       },
       tag: {
         type: 'string',
-        description: 'Optional: Tag to filter by (without # symbol, e.g., "项目")',
+        description: 'Optional: Tag to filter by (without # symbol, e.g., "project")',
       },
       filename: {
         type: 'string',
@@ -64,5 +64,32 @@ export class UnifiedSearchHandler extends BaseToolHandler<
       notebook: args.notebook_id,
       types: args.types,
     });
+  }
+}
+
+/**
+ * Execute a raw SQL query against the SiYuan database
+ */
+export class ExecuteSqlHandler extends BaseToolHandler<
+  { sql: string },
+  Block[]
+> {
+  readonly name = 'execute_sql';
+  readonly description =
+    'Execute a raw SQL query against the SiYuan database. The main table is "blocks" with columns: id, parent_id, root_id, box, path, hpath, name, alias, memo, tag, content, type, subtype, ial, sort, created, updated. Block types: d=document, h=heading, p=paragraph, l=list, i=list-item, c=code, m=math, t=table, b=blockquote, s=super-block.';
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      sql: {
+        type: 'string',
+        description:
+          'SQL query to execute (e.g. "SELECT * FROM blocks WHERE type=\'d\' LIMIT 10")',
+      },
+    },
+    required: ['sql'],
+  };
+
+  async execute(args: any, context: ExecutionContext): Promise<Block[]> {
+    return await context.siyuan.search.query(args.sql);
   }
 }
