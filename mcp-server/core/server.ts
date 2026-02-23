@@ -22,7 +22,7 @@ const SERVER_INSTRUCTIONS = `You have access to a SiYuan Note workspace through 
 - **Prefer block-level tools for targeted edits.** When you know the block ID (e.g. from a search result or SQL query), use get_block / update_block instead of fetching the entire document. This is faster and uses fewer tokens.
 - **Use document-level tools when you need full context.** If you need to understand the overall structure or content of a note, get_document_content is the right choice — don't avoid it when context matters.
 - **Use execute_sql for complex lookups.** The SQL tool gives direct access to the blocks table and is more flexible than unified_search for queries involving multiple conditions, sorting, or aggregation.
-- **Use get_child_blocks to navigate block structure.** To explore what's inside a document, call get_child_blocks on the document ID to see its top-level blocks (headings, paragraphs, etc.), then drill into specific blocks. This is more efficient than loading the entire document when you only need to find and edit a particular section.
+- **Use get_child_blocks for efficient two-step navigation.** First call get_child_blocks on the document ID to see top-level blocks (scan headings to find the right section). Then call get_child_blocks on a heading block ID to get only the blocks within that section. This avoids loading the full document when you only need one section — for a large document this can be 5-10x fewer tokens than get_document_content.
 - **Use get_hpath_by_id to resolve locations.** When reporting results to the user, resolve block IDs to human-readable paths so the user knows where things are.
 
 ## Data safety

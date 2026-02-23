@@ -228,7 +228,7 @@ export class GetChildBlocksHandler extends BaseToolHandler<
 > {
   readonly name = 'get_child_blocks';
   readonly description =
-    'Get the immediate child blocks of a block by its ID. Use on a document ID to see its top-level structure (headings, paragraphs, lists, etc.), or on a heading/container block to see what is nested inside it. Returns each child\'s ID, type, and subType.';
+    'Get the child blocks of a block by its ID. Supports two-level navigation: (1) call on a document ID to get all top-level blocks (headings, paragraphs, etc.), then (2) call on a heading block ID to get only the blocks within that section. This lets you navigate to a specific section without loading the full document. Returns each child\'s ID, type, subType, and content.';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {

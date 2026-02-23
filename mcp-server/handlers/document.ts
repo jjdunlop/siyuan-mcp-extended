@@ -276,7 +276,7 @@ export class GetDocumentTreeHandler extends BaseToolHandler<
   DocTreeNodeResponse[]
 > {
   readonly name = 'get_document_tree';
-  readonly description = 'Get the hierarchical structure of notes in SiYuan with specified depth. Returns the note tree starting from a notebook or parent note.';
+  readonly description = 'Get the sub-document hierarchy starting from a notebook or document. Only shows nested documents (sub-pages), NOT the blocks within a document. To see the blocks inside a document (headings, paragraphs, etc.), use get_child_blocks instead.';
   readonly inputSchema: JSONSchema = {
     type: 'object',
     properties: {
