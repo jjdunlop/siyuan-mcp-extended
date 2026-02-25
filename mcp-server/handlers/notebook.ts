@@ -55,6 +55,53 @@ export class GetRecentlyUpdatedDocumentsHandler extends BaseToolHandler<
 }
 
 /**
+ * 设置每日笔记格式
+ */
+export class SetDailyNoteFormatHandler extends BaseToolHandler<
+  { notebook_id: string; path_template: string },
+  string
+> {
+  readonly name = 'set_daily_note_format';
+  readonly description = `Configure the folder structure and file naming format for daily notes in a SiYuan notebook. Uses Go time format via Sprig templates.
+
+Available format tokens:
+- {{now | date "2006"}}    → 4-digit year (e.g. 2024)
+- {{now | date "01"}}      → 2-digit month number (e.g. 03)
+- {{now | date "January"}} → full month name (e.g. March)
+- {{now | date "Jan"}}     → abbreviated month (e.g. Mar)
+- {{now | date "02"}}      → 2-digit day (e.g. 21)
+- {{now | date "2006-01-02"}} → full date (e.g. 2024-03-21)
+
+Default format produces: Daily Notes/2024/03 - March/2024-03-21`;
+
+  readonly inputSchema: JSONSchema = {
+    type: 'object',
+    properties: {
+      notebook_id: {
+        type: 'string',
+        description: 'The notebook ID to configure',
+      },
+      path_template: {
+        type: 'string',
+        description:
+          'Path template for daily notes using Go/Sprig date format. ' +
+          'Example (default): /Daily Notes/{{now | date "2006"}}/{{now | date "01"}} - {{now | date "January"}}/{{now | date "2006-01-02"}}',
+      },
+    },
+    required: ['notebook_id', 'path_template'],
+  };
+
+  async execute(args: any, context: ExecutionContext): Promise<string> {
+    const currentConf = await context.siyuan.notebook.getNotebookConf(args.notebook_id);
+    await context.siyuan.notebook.setNotebookConf(args.notebook_id, {
+      ...currentConf,
+      dailyNoteSavePath: args.path_template,
+    });
+    return `Daily note format updated to: ${args.path_template}`;
+  }
+}
+
+/**
  * 创建新笔记本
  */
 export class CreateNotebookHandler extends BaseToolHandler<{ name: string }, string> {

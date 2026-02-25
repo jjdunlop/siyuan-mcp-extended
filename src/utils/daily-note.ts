@@ -44,7 +44,7 @@ export class DailyNoteUtils {
     // 获取今日笔记保存路径模板
     const dailyNoteSavePath =
       notebookConf.dailyNoteSavePath ||
-      '/daily note/{{now | date "2006/01"}}/{{now | date "2006-01-02"}}';
+      '/Daily Notes/{{now | date "2006"}}/{{now | date "01"}} - {{now | date "January"}}/{{now | date "2006-01-02"}}';
 
     // 渲染日期模板
     const dailyNotePath = await this.renderTemplate(dailyNoteSavePath);

@@ -37,7 +37,7 @@ The code in this project is primarily developed with AI assistance. While functi
 ## ✨ Features
 
 - 🚀 Full MCP (Model Context Protocol) implementation
-- 📝 31 tools for comprehensive SiYuan Note operations
+- 📝 32 tools for comprehensive SiYuan Note operations
 - 🔍 Unified search, raw SQL queries, and scoped document search
 - 📁 Document management (create, read, update, rename, delete, move, tree)
 - 🧱 Block-level operations (get, update, insert, append, move, attributes)
@@ -154,7 +154,7 @@ After configuration, restart your MCP client (Cursor/Claude Desktop) and try:
 
 ## 🛠️ Available MCP Tools
 
-Once configured, you can interact with SiYuan through natural language. The server provides 31 tools:
+Once configured, you can interact with SiYuan through natural language. The server provides 32 tools:
 
 ### 🔍 Search & Query
 - **unified_search** - Search by content, filename, tag, or any combination (use `types: ["d"]` for document-only results)
@@ -186,6 +186,7 @@ Once configured, you can interact with SiYuan through natural language. The serv
 
 ### 📅 Daily Note
 - **append_to_daily_note** - Append to today's daily note (auto-creates if needed)
+- **set_daily_note_format** - Configure the folder structure and file naming for daily notes (per notebook)
 
 ### 📚 Notebook Management
 - **list_notebooks** - List all notebooks
@@ -217,6 +218,7 @@ Ask your AI assistant naturally:
 "What's the tree structure of my 'Projects' notebook?"
 "Move document X to the root of my Work notebook"
 "Move documents X and Y under document Z"
+"Set my daily note format to use year/month folders"
 ```
 
 ## 📖 Tool Parameters Reference
@@ -269,6 +271,59 @@ Batch replace all occurrences of a tag across all documents.
 {
   old_tag: "deprecated",
   new_tag: ""
+}
+```
+
+### set_daily_note_format
+
+Configure the folder structure and file naming format for daily notes in a notebook. The setting is saved in SiYuan's notebook configuration and persists across all clients.
+
+**Default format** produces a structure like:
+```
+Daily Notes/
+├── 2024/
+│   ├── 01 - January/
+│   │   └── 2024-01-15
+│   └── 03 - March/
+│       └── 2024-03-21
+└── 2025/
+    └── 07 - July/
+        └── 2025-07-04
+```
+
+**Parameters:**
+- `notebook_id` (string) - **Required**. The notebook ID to configure
+- `path_template` (string) - **Required**. Path template using Go time format via Sprig
+
+**Template tokens:**
+
+| Token | Output | Example |
+|-------|--------|---------|
+| `{{now \| date "2006"}}` | 4-digit year | `2024` |
+| `{{now \| date "01"}}` | 2-digit month | `03` |
+| `{{now \| date "January"}}` | Full month name | `March` |
+| `{{now \| date "Jan"}}` | Abbreviated month | `Mar` |
+| `{{now \| date "02"}}` | 2-digit day | `21` |
+| `{{now \| date "2006-01-02"}}` | Full date | `2024-03-21` |
+
+**Examples:**
+```typescript
+// Default: year/month-name/date (Daily Notes/2024/03 - March/2024-03-21)
+{
+  notebook_id: "20210101000000-abc1234",
+  path_template: '/Daily Notes/{{now | date "2006"}}/{{now | date "01"}} - {{now | date "January"}}/{{now | date "2006-01-02"}}'
+}
+
+// Flat: all notes in one folder (Journals/2024-03-21)
+{
+  notebook_id: "20210101000000-abc1234",
+  path_template: '/Journals/{{now | date "2006-01-02"}}'
+}
+
+// Year only: grouped by year (Daily Notes/2024/2024-03-21)
+{
+  notebook_id: "20210101000000-abc1234",
+  path_template: '/Daily Notes/{{now | date "2006"}}/{{now | date "2006-01-02"}}'
 }
 ```
 

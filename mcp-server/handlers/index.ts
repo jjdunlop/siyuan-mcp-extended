@@ -55,6 +55,7 @@ import {
   ListNotebooksHandler,
   GetRecentlyUpdatedDocumentsHandler,
   CreateNotebookHandler,
+  SetDailyNoteFormatHandler,
 } from './notebook.js';
 import {
   CreateSnapshotHandler,
@@ -101,6 +102,7 @@ export function createAllHandlers() {
     new ListNotebooksHandler(),
     new GetRecentlyUpdatedDocumentsHandler(),
     new CreateNotebookHandler(),
+    new SetDailyNoteFormatHandler(),
 
     // Snapshots
     new CreateSnapshotHandler(),
